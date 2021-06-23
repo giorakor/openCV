@@ -11,7 +11,7 @@ last = time.time()
 
 lower = np.array([35, 40, 50])
 upper = np.array([75, 255, 200])
-min_size = 1000
+min_size = 500
 
 while True:
     ret, frame = cam.read()
@@ -22,8 +22,8 @@ while True:
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower, upper)
-    mask = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5)))
-    mask = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5)))
+    mask = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
+    mask = cv2.dilate(mask, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
     cv2.imshow("mask", mask)
 
     nb_components, all_blobs, stats, _ = cv2.connectedComponentsWithStats(
@@ -37,20 +37,21 @@ while True:
 
             for j in range(0, len(contours)):  # loop through all contours in a blob
                 cnt = contours[j]
-                cv2.drawContours(frame, [cnt], 0, (250, 0, 250), 2)
-                if hierarchy[0, j, 3] == -1:  # no parent contour - i.e - the outer contour only
+                cv2.drawContours(frame, [cnt], 0, (0, 0, 0), 3)
+                # no parent contour - i.e - the outer contour only
+                if hierarchy[0, j, 3] == -1:
                     area = cv2.contourArea(cnt)
                     hull = cv2.convexHull(cnt)
                     hull_area = cv2.contourArea(hull)
                     solidity = float(area)/hull_area
-                    if solidity > 0.3 and solidity < 0.5:
-                        poly_approx = cv2.approxPolyDP(cnt,
-                                                       0.018 * cv2.arcLength(cnt, True), True)
-                        if(len(poly_approx) == 8):
+                    if solidity > 0.12 and solidity < 0.35:
+                        poly_approx = cv2.approxPolyDP(hull,
+                                                       0.02 * cv2.arcLength(hull, True), True)
+                        if(len(poly_approx) == 4):
                             cv2.drawContours(
-                                frame, [poly_approx], 0, (0, 255, 255), 2)
+                                frame, [poly_approx], 0, (0, 0, 255), 2)
                             for pnt in poly_approx:
-                                cv2.circle(frame, pnt[0], 5, (255, 0, 0), 2)
+                                cv2.circle(frame, pnt[0], 10, (255, 0, 0), 2)
 
     #print(time.time() - start, " ", time.time()-last)
     last = time.time()
